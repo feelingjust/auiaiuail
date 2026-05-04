@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Larz AI — Sarviola Adnan</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --gold:#E8B84B;--gold-light:#F5D080;--gold-dim:#A07820;
+  --gold-glow:rgba(232,184,75,.12);
+  --bg:#0A0905;--bg2:#0F0D08;--bg3:#141209;
+  --surface:#181510;--surface2:#201D12;--surface3:#282418;
+  --border:rgba(232,184,75,.1);--border-b:rgba(232,184,75,.25);
+  --text:#F0EAD6;--text-m:#8A8070;--text-d:#4A4438;
+  --radius:1.1rem;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;overflow:hidden}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;font-size:15px;line-height:1.7;display:flex;height:100vh;}
+
+.sidebar{width:260px;flex-shrink:0;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;height:100vh;overflow:hidden;transition:transform .3s;}
+.sidebar-head{padding:1rem 1rem .75rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.logo{display:flex;align-items:center;gap:8px;font-family:'Syne',sans-serif;font-size:1.1rem;font-weight:800;color:var(--gold);text-decoration:none;}
+.logo svg{width:26px;height:26px;flex-shrink:0}
+.new-chat-btn{width:100%;margin:.75rem 0;padding:.65rem 1rem;background:var(--gold-glow);border:1px dashed var(--border-b);border-radius:.7rem;color:var(--gold);font-family:'Syne',sans-serif;font-size:.8rem;font-weight:700;letter-spacing:.04em;cursor:pointer;display:flex;align-items:center;gap:.5rem;transition:.2s;}
+.new-chat-btn:hover{background:rgba(232,184,75,.18);border-color:var(--gold)}
+.new-chat-btn svg{width:14px;height:14px}
+.sidebar-section{padding:0 .75rem}
+.sidebar-label{font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;color:var(--text-d);padding:.5rem .25rem .3rem;font-weight:600;}
+.chat-history-item{padding:.55rem .75rem;border-radius:.6rem;cursor:pointer;font-size:.82rem;color:var(--text-m);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:.15s;display:flex;align-items:center;gap:.5rem;}
+.chat-history-item:hover{background:var(--surface2);color:var(--text)}
+.chat-history-item.active{background:var(--surface2);color:var(--gold)}
+.chat-history-item svg{width:12px;height:12px;flex-shrink:0;opacity:.5}
+.sidebar-footer{margin-top:auto;padding:1rem;border-top:1px solid var(--border);}
+.user-pill{display:flex;align-items:center;gap:.75rem;padding:.6rem .75rem;border-radius:.7rem;cursor:pointer;transition:.15s;}
+.user-pill:hover{background:var(--surface2)}
+.user-avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#C8962A,var(--gold));display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:700;color:#0A0905;font-family:'Syne',sans-serif;flex-shrink:0;}
+.user-info .name{font-size:.85rem;font-weight:500}
+.user-info .plan{font-size:.73rem;color:var(--gold);letter-spacing:.04em}
+
+.main{flex:1;display:flex;flex-direction:column;min-width:0;position:relative}
+.topbar{padding:.9rem 1.25rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:1rem;background:rgba(10,9,5,.8);backdrop-filter:blur(12px);flex-shrink:0;z-index:10;}
+.menu-btn{display:none;background:none;border:none;cursor:pointer;padding:4px;color:var(--text-m);}
+.menu-btn svg{width:20px;height:20px}
+.model-selector{display:flex;align-items:center;gap:.5rem;padding:.35rem .85rem;border-radius:2rem;border:1px solid var(--border-b);background:var(--surface);font-size:.82rem;color:var(--text);cursor:pointer;font-family:'Syne',sans-serif;font-weight:600;transition:.2s;}
+.model-selector:hover{border-color:var(--gold);color:var(--gold)}
+.model-selector svg{width:12px;height:12px;color:var(--text-m)}
+.status-badge{display:flex;align-items:center;gap:.4rem;font-size:.75rem;color:var(--gold);background:var(--gold-glow);border:1px solid var(--border-b);padding:.3rem .75rem;border-radius:2rem;margin-left:auto;}
+.status-badge .dot{width:6px;height:6px;border-radius:50%;background:var(--gold);animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.7)}}
+
+.messages-wrap{flex:1;overflow-y:auto;scroll-behavior:smooth;}
+.messages-wrap::-webkit-scrollbar{width:4px}
+.messages-wrap::-webkit-scrollbar-track{background:transparent}
+.messages-wrap::-webkit-scrollbar-thumb{background:var(--border-b);border-radius:2px}
+.messages-inner{max-width:780px;margin:0 auto;padding:2rem 1.5rem 1rem;display:flex;flex-direction:column;gap:0;}
+
+.welcome{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;text-align:center;padding:2rem;}
+.welcome-icon{width:64px;height:64px;border-radius:1.2rem;background:linear-gradient(135deg,var(--gold-dim),var(--gold));display:flex;align-items:center;justify-content:center;margin-bottom:1.5rem;box-shadow:0 0 40px rgba(232,184,75,.25);}
+.welcome-icon svg{width:32px;height:32px}
+.welcome h1{font-family:'Syne',sans-serif;font-size:1.8rem;font-weight:800;letter-spacing:-.02em}
+.welcome p{color:var(--text-m);margin:.5rem 0 2rem;font-size:.95rem}
+.suggestions{display:grid;grid-template-columns:1fr 1fr;gap:.75rem;width:100%;max-width:560px}
+.suggestion-chip{background:var(--surface);border:1px solid var(--border);border-radius:.8rem;padding:.85rem 1rem;text-align:left;cursor:pointer;transition:.2s;}
+.suggestion-chip:hover{border-color:var(--border-b);background:var(--surface2);transform:translateY(-2px)}
+.suggestion-chip .chip-icon{font-size:1.1rem;margin-bottom:.35rem;display:block}
+.suggestion-chip .chip-text{font-size:.8rem;color:var(--text-m);line-height:1.4}
+.suggestion-chip .chip-title{font-size:.85rem;font-weight:500;color:var(--text);display:block}
+
+.msg-row{display:flex;gap:.75rem;padding:.6rem 0;animation:msgIn .3s ease forwards;}
+@keyframes msgIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.msg-row.user{flex-direction:row-reverse}
+.msg-row .av{width:34px;height:34px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:700;font-family:'Syne',sans-serif;margin-top:2px;}
+.msg-row .av.ai{background:linear-gradient(135deg,var(--gold-dim),var(--gold));color:#0A0905;}
+.msg-row .av.user{background:var(--surface3);border:1px solid var(--border-b);color:var(--gold);}
+.msg-content{flex:1;min-width:0}
+.msg-row.user .msg-content{display:flex;flex-direction:column;align-items:flex-end}
+.bubble{max-width:78%;padding:.85rem 1.1rem;border-radius:1.1rem;font-size:.9rem;line-height:1.75;word-break:break-word;}
+.bubble.ai{background:var(--surface);border:1px solid var(--border);border-top-left-radius:.3rem;color:var(--text);max-width:100%;}
+.bubble.user{background:rgba(232,184,75,.1);border:1px solid rgba(232,184,75,.2);border-top-right-radius:.3rem;color:var(--text);}
+.bubble strong{color:var(--gold);font-weight:500}
+.bubble em{color:var(--text-m);font-style:italic}
+.bubble code{background:var(--surface3);border:1px solid var(--border);padding:.1rem .35rem;border-radius:.3rem;font-family:monospace;font-size:.83rem;color:var(--gold-light);}
+.bubble pre{background:var(--surface3);border:1px solid var(--border);padding:.85rem 1rem;border-radius:.6rem;margin:.5rem 0;font-family:monospace;font-size:.82rem;overflow-x:auto;color:#c8e6c8;line-height:1.6;}
+.bubble pre code{background:none;border:none;padding:0;font-size:.82rem;color:#c8e6c8;}
+.bubble ul,.bubble ol{padding-left:1.4rem;margin:.4rem 0}
+.bubble ul li,.bubble ol li{margin:.2rem 0;color:var(--text)}
+.bubble h1,.bubble h2,.bubble h3{font-family:'Syne',sans-serif;color:var(--gold);margin:.6rem 0 .3rem;}
+.bubble h1{font-size:1.1rem}.bubble h2{font-size:1rem}.bubble h3{font-size:.95rem}
+.bubble blockquote{border-left:3px solid var(--gold-dim);padding-left:.8rem;color:var(--text-m);margin:.4rem 0;}
+.bubble a{color:var(--gold);text-decoration:underline;text-underline-offset:2px}
+.bubble hr{border:none;border-top:1px solid var(--border);margin:.6rem 0}
+
+.streaming-cursor::after{content:'▋';animation:blink .7s infinite;color:var(--gold);font-size:.85rem;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+
+.typing-bubble{background:var(--surface);border:1px solid var(--border);border-top-left-radius:.3rem;padding:.75rem 1rem;border-radius:1.1rem;display:flex;align-items:center;gap:5px;width:fit-content;}
+.typing-bubble span{width:7px;height:7px;border-radius:50%;background:var(--gold-dim);animation:td 1.2s infinite;}
+.typing-bubble span:nth-child(2){animation-delay:.2s}
+.typing-bubble span:nth-child(3){animation-delay:.4s}
+@keyframes td{0%,60%,100%{transform:translateY(0);opacity:.5}30%{transform:translateY(-5px);opacity:1}}
+
+.msg-meta{font-size:.7rem;color:var(--text-d);margin-top:.25rem;display:flex;align-items:center;gap:.4rem;}
+.msg-actions{display:flex;gap:.3rem;margin-top:.3rem;opacity:0;transition:.15s;}
+.msg-row:hover .msg-actions{opacity:1}
+.action-btn{background:none;border:1px solid var(--border);border-radius:.4rem;padding:.2rem .5rem;cursor:pointer;color:var(--text-m);font-size:.7rem;transition:.15s;display:flex;align-items:center;gap:.3rem;}
+.action-btn:hover{border-color:var(--border-b);color:var(--gold)}
+.action-btn svg{width:11px;height:11px}
+
+.day-divider{display:flex;align-items:center;gap:.75rem;margin:1.25rem 0 .5rem;color:var(--text-d);font-size:.72rem;letter-spacing:.08em;}
+.day-divider::before,.day-divider::after{content:'';flex:1;height:1px;background:var(--border);}
+
+.input-area{padding:1rem 1.25rem 1.25rem;flex-shrink:0;background:var(--bg);}
+.input-wrap{max-width:780px;margin:0 auto;}
+.input-box{background:var(--surface);border:1px solid var(--border-b);border-radius:1.1rem;display:flex;flex-direction:column;transition:.2s;}
+.input-box:focus-within{border-color:var(--gold);box-shadow:0 0 0 3px rgba(232,184,75,.08);}
+.input-top{display:flex;align-items:flex-end;gap:.5rem;padding:.75rem .75rem .75rem 1rem}
+textarea{flex:1;background:none;border:none;outline:none;resize:none;color:var(--text);font-family:'DM Sans',sans-serif;font-size:.92rem;line-height:1.6;max-height:160px;min-height:24px;scrollbar-width:none;}
+textarea::placeholder{color:var(--text-d)}
+textarea::-webkit-scrollbar{display:none}
+.send-btn{width:36px;height:36px;border-radius:.7rem;background:var(--gold);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:.15s;}
+.send-btn:hover{opacity:.85;transform:scale(1.05)}
+.send-btn:active{transform:scale(.95)}
+.send-btn:disabled{opacity:.35;cursor:not-allowed;transform:none}
+.send-btn svg{width:16px;height:16px}
+.stop-btn{width:36px;height:36px;border-radius:.7rem;background:rgba(220,80,80,.15);border:1px solid rgba(220,80,80,.3);cursor:pointer;display:none;align-items:center;justify-content:center;flex-shrink:0;transition:.15s;}
+.stop-btn:hover{background:rgba(220,80,80,.25)}
+.stop-btn svg{width:12px;height:12px;color:#e07070}
+.stop-btn.visible{display:flex}
+.input-bottom{display:flex;align-items:center;padding:0 .75rem .75rem 1rem;}
+.char-count{margin-left:auto;font-size:.7rem;color:var(--text-d)}
+.input-hint{text-align:center;font-size:.7rem;color:var(--text-d);margin-top:.65rem;letter-spacing:.02em;}
+
+.toast{position:fixed;bottom:6rem;left:50%;transform:translateX(-50%);background:#2a1010;border:1px solid rgba(220,80,80,.4);color:#e07070;font-size:.82rem;padding:.6rem 1.2rem;border-radius:2rem;z-index:200;opacity:0;transition:opacity .3s;pointer-events:none;max-width:90vw;text-align:center;}
+.toast.show{opacity:1}
+
+.sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:49;}
+
+@media(max-width:768px){
+  .sidebar{position:fixed;left:0;top:0;bottom:0;z-index:50;transform:translateX(-100%);}
+  .sidebar.open{transform:translateX(0)}
+  .sidebar-overlay.show{display:block}
+  .menu-btn{display:flex;align-items:center;justify-content:center}
+  .suggestions{grid-template-columns:1fr}
+  .bubble{max-width:90%}
+  .status-badge span{display:none}
+}
+@media(max-width:480px){
+  .messages-inner{padding:1.25rem .75rem .5rem}
+  .input-area{padding:.75rem .75rem 1rem}
+  .topbar{padding:.75rem 1rem}
+}
+</style>
+</head>
+<body>
+
+<div class="toast" id="toast"></div>
+<div class="sidebar-overlay" id="overlay" onclick="closeSidebar()"></div>
+
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-head">
+    <a href="#" class="logo">
+      <svg viewBox="0 0 26 26" fill="none">
+        <rect width="26" height="26" rx="7" fill="#E8B84B"/>
+        <path d="M6 18L10 8L13 14L16 10L20 18" stroke="#0A0905" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="13" cy="5.5" r="2" fill="#0A0905"/>
+      </svg>
+      Larz AI
+    </a>
+  </div>
+  <div style="padding:.75rem">
+    <button class="new-chat-btn" onclick="newChat()">
+      <svg viewBox="0 0 14 14" fill="none"><path d="M7 2V12M2 7H12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      Chat Baru
+    </button>
+    <div class="sidebar-section">
+      <div class="sidebar-label">Sesi ini</div>
+      <div class="chat-history-item active" id="currentChatItem">
+        <svg viewBox="0 0 12 12" fill="none"><path d="M1 1h10v8H1zM4 11h4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Chat dengan Larz AI
+      </div>
+      <div class="sidebar-label" style="margin-top:.5rem">Contoh topik</div>
+      <div class="chat-history-item" onclick="sendSuggestion('Jelaskan cara kerja machine learning dengan analogi sederhana')">
+        <svg viewBox="0 0 12 12" fill="none"><path d="M1 1h10v8H1zM4 11h4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Apa itu Machine Learning?
+      </div>
+      <div class="chat-history-item" onclick="sendSuggestion('Buatkan script Python untuk scraping harga produk di e-commerce')">
+        <svg viewBox="0 0 12 12" fill="none"><path d="M1 1h10v8H1zM4 11h4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Script Python scraping
+      </div>
+      <div class="chat-history-item" onclick="sendSuggestion('Tuliskan email profesional untuk melamar pekerjaan di bidang teknologi')">
+        <svg viewBox="0 0 12 12" fill="none"><path d="M1 1h10v8H1zM4 11h4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Email lamaran kerja
+      </div>
+      <div class="chat-history-item" onclick="sendSuggestion('Apa tren teknologi AI paling penting di tahun 2025?')">
+        <svg viewBox="0 0 12 12" fill="none"><path d="M1 1h10v8H1zM4 11h4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Tren AI 2025
+      </div>
+    </div>
+  </div>
+  <div class="sidebar-footer">
+    <div class="user-pill">
+      <div class="user-avatar">L</div>
+      <div class="user-info">
+        <div class="name">Larz AI</div>
+        <div class="plan">✦ Pollinations AI</div>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<main class="main">
+  <div class="topbar">
+    <button class="menu-btn" onclick="toggleSidebar()">
+      <svg viewBox="0 0 20 20" fill="none"><path d="M3 5h14M3 10h14M3 15h14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+    </button>
+    <div class="model-selector">
+      <svg viewBox="0 0 12 12" fill="none"><path d="M6 1l1.5 3L11 4.5 8.5 7l.5 3.5L6 9l-3 1.5.5-3.5L1 4.5 4.5 4z" stroke="currentColor" stroke-width="1.2"/></svg>
+      Larz AI Pro
+      <svg viewBox="0 0 12 12" fill="none"><path d="M3 4.5L6 7.5L9 4.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+    </div>
+    <div class="status-badge" id="statusBadge">
+      <div class="dot"></div>
+      <span>AI Aktif</span>
+    </div>
+  </div>
+
+  <div class="messages-wrap" id="msgWrap">
+    <div class="messages-inner" id="msgInner">
+      <div class="welcome" id="welcomeState">
+        <div class="welcome-icon">
+          <svg viewBox="0 0 32 32" fill="none">
+            <path d="M8 22L13 10L16 17L19 13L24 22" stroke="#0A0905" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <circle cx="16" cy="6" r="3" fill="#0A0905"/>
+          </svg>
+        </div>
+        <h1>Halo! Aku Larz AI</h1>
+        <p>Tanyakan apa saja — aku bisa bantu coding, analisis, nulis,<br>atau sekadar ngobrol santai. Gratis tanpa API key!</p>
+        <div class="suggestions">
+          <div class="suggestion-chip" onclick="sendSuggestion('Siapa kamu dan apa yang bisa kamu lakukan?')">
+            <span class="chip-icon"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6.5" stroke="#E8B84B" stroke-width="1.2"/><path d="M8 7v5M8 5v.5" stroke="#E8B84B" stroke-width="1.5" stroke-linecap="round"/></svg></span>
+            <span class="chip-title">Kenalan dulu</span>
+            <span class="chip-text">Siapa kamu dan apa yang bisa kamu lakukan?</span>
+          </div>
+          <div class="suggestion-chip" onclick="sendSuggestion('Jelaskan cara kerja neural network dengan analogi yang mudah dipahami')">
+            <span class="chip-icon"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="2" y="3" width="12" height="10" rx="1.5" stroke="#E8B84B" stroke-width="1.2"/><path d="M5 7h6M5 9.5h4" stroke="#E8B84B" stroke-width="1.2" stroke-linecap="round"/></svg></span>
+            <span class="chip-title">Belajar AI</span>
+            <span class="chip-text">Cara kerja neural network dengan analogi</span>
+          </div>
+          <div class="suggestion-chip" onclick="sendSuggestion('Buatkan script Python untuk web scraping dengan requests dan BeautifulSoup')">
+            <span class="chip-icon"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M5 4L2 8l3 4M11 4l3 4-3 4M9 3l-2 10" stroke="#E8B84B" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+            <span class="chip-title">Bantu coding</span>
+            <span class="chip-text">Script Python untuk web scraping</span>
+          </div>
+          <div class="suggestion-chip" onclick="sendSuggestion('Buatkan caption Instagram yang menarik untuk postingan foto liburan di Bali')">
+            <span class="chip-icon"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 12L5.5 8l3 3L12 5l2 2" stroke="#E8B84B" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+            <span class="chip-title">Buat konten</span>
+            <span class="chip-text">Caption Instagram liburan Bali</span>
+          </div>
+        </div>
+      </div>
+      <div class="day-divider" id="dayDivider" style="display:none">Hari ini</div>
+    </div>
+  </div>
+
+  <div class="input-area">
+    <div class="input-wrap">
+      <div class="input-box">
+        <div class="input-top">
+          <textarea id="chatInput" placeholder="Tanya apa saja ke Larz AI..." rows="1" maxlength="4000"
+            onkeydown="handleKey(event)" oninput="autoResize(this);updateCharCount()"></textarea>
+          <button class="stop-btn" id="stopBtn" onclick="stopGeneration()" title="Stop">
+            <svg viewBox="0 0 12 12" fill="none"><rect x="2" y="2" width="8" height="8" rx="1.5" fill="currentColor"/></svg>
+          </button>
+          <button class="send-btn" id="sendBtn" onclick="sendMessage()" disabled>
+            <svg viewBox="0 0 16 16" fill="none">
+              <path d="M3 8H13M9 4L13 8L9 12" stroke="#0A0905" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+        </div>
+        <div class="input-bottom">
+          <span class="char-count" id="charCount">0 / 4000</span>
+        </div>
+      </div>
+      <div class="input-hint">Larz AI ditenagai Pollinations AI · Gratis & tanpa API key · Respons dapat mengandung kesalahan.</div>
+    </div>
+  </div>
+</main>
+
+<script>
+const msgInner     = document.getElementById('msgInner');
+const msgWrap      = document.getElementById('msgWrap');
+const chatInput    = document.getElementById('chatInput');
+const sendBtn      = document.getElementById('sendBtn');
+const stopBtn      = document.getElementById('stopBtn');
+const welcomeState = document.getElementById('welcomeState');
+const dayDivider   = document.getElementById('dayDivider');
+const statusBadge  = document.getElementById('statusBadge');
+
+let isGenerating        = false;
+let msgCount            = 0;
+let abortController     = null;
+let conversationHistory = [];
+
+const SYSTEM_PROMPT = `Kamu adalah Larz AI — asisten kecerdasan buatan yang cerdas, ramah, dan sangat membantu.
+
+Kepribadianmu:
+- Hangat, ramah, dan sedikit santai tapi tetap profesional
+- Bicara dalam Bahasa Indonesia yang natural (boleh sesekali campur kata Inggris teknis)
+- Antusias membantu, tapi tidak berlebihan
+- Jujur jika tidak tahu sesuatu
+
+Format respons:
+- Gunakan markdown untuk formatting (bold, kode, list, dll)
+- Untuk kode, selalu gunakan code block dengan bahasa yang sesuai
+- Jaga respons tetap fokus dan tidak bertele-tele`;
+
+// ─── UTILS ────────────────────────────────────────────────────────────────────
+function getTime() {
+  return new Date().toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'});
+}
+function escapeHtml(t) {
+  return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+function escapeRaw(t) {
+  return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+function showToast(msg, ms=3500) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), ms);
+}
+function scrollToBottom() { msgWrap.scrollTop = msgWrap.scrollHeight; }
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 160) + 'px';
+  sendBtn.disabled = el.value.trim().length === 0 || isGenerating;
+}
+function updateCharCount() {
+  document.getElementById('charCount').textContent = chatInput.value.length + ' / 4000';
+}
+function handleKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); if (!sendBtn.disabled) sendMessage(); }
+}
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('overlay').classList.toggle('show');
+}
+function closeSidebar() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('overlay').classList.remove('show');
+}
+function sendSuggestion(text) {
+  chatInput.value = text; autoResize(chatInput); sendMessage(); closeSidebar();
+}
+function showWelcome(show) {
+  welcomeState.style.display = show ? 'flex' : 'none';
+  dayDivider.style.display   = show ? 'none' : 'flex';
+}
+
+// ─── MARKDOWN ─────────────────────────────────────────────────────────────────
+function renderMarkdown(text) {
+  let o = text;
+  o = o.replace(/```(\w*)\n?([\s\S]*?)```/g, (_, l, c) => `<pre><code>${escapeRaw(c.trim())}</code></pre>`);
+  o = o.replace(/`([^`\n]+)`/g, (_, c) => `<code>${escapeRaw(c)}</code>`);
+  o = o.replace(/\*\*\*(.+?)\*\*\*/g, '<strong><em>$1</em></strong>');
+  o = o.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  o = o.replace(/\*([^*\n]+)\*/g, '<em>$1</em>');
+  o = o.replace(/^### (.+)$/gm, '<h3>$1</h3>');
+  o = o.replace(/^## (.+)$/gm,  '<h2>$1</h2>');
+  o = o.replace(/^# (.+)$/gm,   '<h1>$1</h1>');
+  o = o.replace(/^> (.+)$/gm,   '<blockquote>$1</blockquote>');
+  o = o.replace(/^---$/gm,      '<hr>');
+  o = o.replace(/^[\*\-] (.+)$/gm, '<li>$1</li>');
+  o = o.replace(/(<li>.*?<\/li>\n?)+/g, m => `<ul>${m}</ul>`);
+  o = o.replace(/^\d+\. (.+)$/gm, '<oli>$1</oli>');
+  o = o.replace(/(<oli>.*?<\/oli>\n?)+/g, m => `<ol>${m.replace(/<oli>/g,'<li>').replace(/<\/oli>/g,'</li>')}</ol>`);
+  o = o.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+  o = o.replace(/\n\n/g,'<br><br>').replace(/\n/g,'<br>');
+  return o;
+}
+
+// ─── MESSAGES ─────────────────────────────────────────────────────────────────
+function appendUserMsg(text) {
+  if (++msgCount === 1) showWelcome(false);
+  const row = document.createElement('div');
+  row.className = 'msg-row user';
+  row.innerHTML = `
+    <div class="av user">K</div>
+    <div class="msg-content">
+      <div class="bubble user">${escapeHtml(text)}</div>
+      <div class="msg-meta">${getTime()}</div>
+    </div>`;
+  msgInner.appendChild(row);
+  scrollToBottom();
+}
+
+function appendTypingIndicator() {
+  const row = document.createElement('div');
+  row.className = 'msg-row'; row.id = 'typingRow';
+  row.innerHTML = `<div class="av ai">L</div><div class="msg-content"><div class="typing-bubble"><span></span><span></span><span></span></div></div>`;
+  msgInner.appendChild(row); scrollToBottom();
+}
+function removeTypingIndicator() { document.getElementById('typingRow')?.remove(); }
+
+function createStreamBubble() {
+  removeTypingIndicator();
+  const row = document.createElement('div');
+  row.className = 'msg-row';
+  row.innerHTML = `
+    <div class="av ai">L</div>
+    <div class="msg-content">
+      <div class="bubble ai streaming-cursor" id="streamBubble"></div>
+      <div style="display:flex;align-items:center;gap:.75rem">
+        <div class="msg-meta">${getTime()}</div>
+        <div class="msg-actions">
+          <button class="action-btn" onclick="copyText(this)">
+            <svg viewBox="0 0 11 11" fill="none"><rect x="3" y="3" width="7" height="7" rx="1" stroke="currentColor" stroke-width="1"/><path d="M1 1h6v2" stroke="currentColor" stroke-width="1" stroke-linecap="round"/></svg>
+            Salin
+          </button>
+        </div>
+      </div>
+    </div>`;
+  msgInner.appendChild(row); scrollToBottom();
+  return document.getElementById('streamBubble');
+}
+
+function finalizeStream(bubble, fullText) {
+  bubble.classList.remove('streaming-cursor');
+  bubble.removeAttribute('id');
+  bubble.innerHTML = renderMarkdown(fullText);
+  scrollToBottom();
+}
+
+function copyText(btn) {
+  const bubble = btn.closest('.msg-content').querySelector('.bubble');
+  navigator.clipboard.writeText(bubble.innerText).then(() => {
+    btn.textContent = '✓ Tersalin';
+    setTimeout(() => { btn.innerHTML = `<svg viewBox="0 0 11 11" fill="none"><rect x="3" y="3" width="7" height="7" rx="1" stroke="currentColor" stroke-width="1"/><path d="M1 1h6v2" stroke="currentColor" stroke-width="1" stroke-linecap="round"/></svg>Salin`; }, 1500);
+  });
+}
+
+// ─── STATE ────────────────────────────────────────────────────────────────────
+function setGenerating(val) {
+  isGenerating = val;
+  sendBtn.disabled = val || chatInput.value.trim().length === 0;
+  stopBtn.classList.toggle('visible', val);
+  statusBadge.innerHTML = val
+    ? `<div class="dot" style="background:#e07070;animation:pulse 1s infinite"></div><span>Sedang menjawab...</span>`
+    : `<div class="dot"></div><span>AI Aktif</span>`;
+}
+function stopGeneration() { abortController?.abort(); }
+
+// ─── POLLINATIONS AI ──────────────────────────────────────────────────────────
+async function sendMessage() {
+  const text = chatInput.value.trim();
+  if (!text || isGenerating) return;
+
+  chatInput.value = ''; chatInput.style.height = 'auto'; updateCharCount();
+  appendUserMsg(text);
+  conversationHistory.push({ role: 'user', content: text });
+  setGenerating(true);
+  appendTypingIndicator();
+  abortController = new AbortController();
+
+  let fullText = '', streamBubble = null;
+
+  try {
+    // Build messages array with system prompt
+    const messages = [
+      { role: 'system', content: SYSTEM_PROMPT },
+      ...conversationHistory
+    ];
+
+    // Pollinations AI — OpenAI-compatible endpoint, no API key needed
+    const res = await fetch('https://text.pollinations.ai/openai', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'openai',
+        messages: messages,
+        stream: true
+      }),
+      signal: abortController.signal
+    });
+
+    if (!res.ok) {
+      const errText = await res.text().catch(() => '');
+      throw new Error(`HTTP ${res.status}: ${errText}`);
+    }
+
+    removeTypingIndicator();
+    streamBubble = createStreamBubble();
+
+    const reader = res.body.getReader();
+    const dec    = new TextDecoder();
+    let buf = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buf += dec.decode(value, { stream: true });
+      const lines = buf.split('\n'); buf = lines.pop();
+      for (const line of lines) {
+        if (!line.startsWith('data: ')) continue;
+        const d = line.slice(6).trim();
+        if (d === '[DONE]') continue;
+        try {
+          const p = JSON.parse(d);
+          const delta = p.choices?.[0]?.delta?.content;
+          if (delta) {
+            fullText += delta;
+            streamBubble.textContent = fullText;
+            scrollToBottom();
+          }
+        } catch (_) {}
+      }
+    }
+
+    finalizeStream(streamBubble, fullText);
+    conversationHistory.push({ role: 'assistant', content: fullText });
+
+    if (msgCount === 1) {
+      const title = text.length > 38 ? text.slice(0, 35) + '...' : text;
+      document.getElementById('currentChatItem').lastChild.textContent = ' ' + title;
+    }
+
+  } catch (err) {
+    removeTypingIndicator();
+    if (streamBubble) {
+      if (fullText) {
+        finalizeStream(streamBubble, fullText + '\n\n*[Dihentikan]*');
+        conversationHistory.push({ role: 'assistant', content: fullText });
+      } else {
+        streamBubble.closest('.msg-row').remove();
+      }
+    }
+    if (err.name !== 'AbortError') {
+      if (err.message.includes('429')) showToast('⚠️ Terlalu banyak request. Tunggu sebentar.');
+      else showToast('❌ Error: ' + err.message);
+      console.error('[Larz AI]', err);
+    }
+  } finally {
+    setGenerating(false);
+    abortController = null;
+    chatInput.focus();
+  }
+}
+
+// ─── NEW CHAT ──────────────────────────────────────────────────────────────────
+function newChat() {
+  msgCount = 0; conversationHistory = [];
+  msgInner.querySelectorAll('.msg-row').forEach(r => r.remove());
+  showWelcome(true);
+  chatInput.value = ''; chatInput.style.height = 'auto'; updateCharCount();
+  closeSidebar();
+  document.getElementById('currentChatItem').lastChild.textContent = ' Chat dengan Larz AI';
+}
+
+window.onload = () => chatInput.focus();
+</script>
+</body>
+</html>
